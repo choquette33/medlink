@@ -1,9 +1,24 @@
-Your Order Has Been Fufilled
-==============================================
+<%= @subject %>
+<%= "=" * @subject.length %>
 
-Your order of:
+Hello <%= @response.user.name %>,
 
-<%= "#{@order.quantity} #{@order.supply.name}; \n" %>
+We have processed your requested medical supplies, and this completes your order. Below you will find instructions and information about your order.
 
-has successfully been filled. Please follow the attached instructions:
-<%= @response.instructions %>
+<%- @orders.each do |order| %>
+  <%= "#{order.supply.name} (#{order.supply.shortcode})" %>
+  <%= "  #{order.delivery_method.title}\n" %>
+<%- end %>
+
+Notes:
+<%- if @response.extra_text.present? %>
+  <%= @response.extra_text %>
+<%- else %>
+  None
+<% end %>
+
+-----
+
+To review previous orders go to pcmedlink.org
+
+If you need further assistance, or wish to request other medications not listed on PCMedlink please contact your Health Unit directly.

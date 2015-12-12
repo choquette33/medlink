@@ -1,38 +1,54 @@
 class ApplicationController < ActionController::Base
   protect_from_forgery
 
-  before_filter :authenticate_user!
-  skip_before_filter :authenticate_user!, only: :help
+  before_action :json_format, if: :api_controller?
+  before_action :authenticate_user!
+  after_action :verify_authorized, except: :index, unless: :devise_controller?
 
-  rescue_from CanCan::AccessDenied do |exception|
-    # TODO: it'd be nice to redirect to the login page in case the user wants
-    #   to sign in with another (authorized) account. Devise redirects logged
-    #   in users away from that page, however, and clobbers the flash message
-    #   in the process.
-    redirect_to root_path, notice: 'You are not authorized to view that page'
+  around_action :alert_if_slow
+
+  include Pundit
+  rescue_from Pundit::NotAuthorizedError do |exception|
+    # TODO: what should we actually do here?
+    render text: "Not Authorized", status: 403
   end
 
-  def root
-    start_page = if current_user.admin?
-      new_admin_user_path
-    elsif current_user.pcmo?
-      manage_orders_path
-    else # PCV
-      orders_path
+  private
+
+  def after_sign_in_path_for user
+    if Video.new(user).seen?
+      root_path
+    else
+      welcome_path
     end
-
-    redirect_to start_page
   end
 
-  def help
-    render 'partials/help'
+  def sort_table prefix=nil
+    @_sort_table_registry ||= SortTable::Registry.new
+    @_sort_table_registry.build(prefix, params) { |t| yield t }
   end
 
-  private # ----------
+  def save_form reform, *args
+    valid = reform.validate *args
+    authorize reform
+    reform.save if valid
+    valid
+  end
 
-  # Redirects to the login path to allow the flash messages to
-  #    display for sign_out.
-  def after_sign_out_path_for(resource_or_scope)
-    new_user_session_path
+  def alert_if_slow
+    start = Time.now
+    yield
+    duration = Time.now - start
+    if duration > Rails.configuration.slow_timeout.seconds
+      Notification.send :slow, "#{params[:controller]}##{params[:action]} took #{duration} (#{request.path})"
+    end
+  end
+
+  def api_controller?
+    false
+  end
+
+  def json_format
+    request.format = :json
   end
 end

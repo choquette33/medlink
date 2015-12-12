@@ -1,13 +1,63 @@
-# Sample localization file for English. Add more files in this directory for other locales.
-# See https://github.com/svenfuchs/rails-i18n/tree/master/rails%2Flocale for starting points.
-
 en:
-  order:
-    confirmation: "Your request has been received. Fulfillment details will follow within 24 hrs via email and text message."
-    unparseable: "Your request was not submitted. Please resubmit your request in this Format: PCVID, Supply short name, dose, qty, location."
-    unrecognized_pcvid: "PCVID Invalid: Your request was not submitted because the PCVID was incorrect. Please resubmit your request in this format: PCVID, Supply short name, dose, qty, location."
-    unrecognized_shortcode: "Supply short name invalid: Your request was not submitted because supply name was incorrect. Please resubmit the request in this format: PCVID, Supply short name, dose, qty, location."
-    invalid_dose: "Dose invalid: Your request was not submitted because dose was incorrect. Please resubmit the request in this format: PCVID, Supply short name, dose, qty, location."
-    invalid_quantity: "Qty invalid: Your request was not submitted because quantity was incorrect. Please resubmit the request in this format: PCVID, Supply short name, dose, qty, location."
-    invalid_location: "Location invalid: Your request was not submitted because location was incorrect. Please resubmit the request in this format: PCVID, Supply short name, dose, qty, location."
-    duplicate_order: "We have already received your request. Please refrain from sending multiple requests."
+  flash:
+    email:
+      not_found: "No account found for %{email}"
+      help_sent: "Email sent to %{email}. Check your inbox (and spam) for instructions."
+    request:
+      empty: "Your order was empty. Please select at least one supply."
+      placed: "Success! Your order has been sent. You should expect a response shortly after %{expected_receipt_date}."
+      placed_for: "Success! The order you placed on behalf of %{username} has been sent. You should expect a response shortly after %{expected_receipt_date}."
+
+    response:
+      sent: "Success! Your response has been sent to %{user}. This request will now appear in the response tracker awaiting further action."
+      archived: "Response has been marked as archived."
+      cancelled: "Response has been cancelled."
+      reordered: "Response has been cancelled and reordered."
+      none_selected: "No response selected."
+      flagged: "Response flagged for follow-up from your PCMO."
+
+    user:
+      added: "Success! You have added a new user to PC Medlink"
+      changes: "Success! You have made the following changes to this user account: %{changes}"
+      no_changes: "No changes made"
+      account_updated: "Your account has been updated"
+      none_selected: "Please select a user to edit"
+      inactive_user: "Success! %{user}'s account has been marked as inactive"
+
+    csv:
+      valid: "Successfully uploaded information for %{users} users"
+
+    country_selected: "You now administrating %{country}"
+
+    auth:
+      admin: "You must be an admin to view that page"
+      pcmo: "You must be an admin or PCMO to view that page"
+      general: "You are not authorized to view that page"
+      password_reset_invalid: "No user matches that email and PCV ID"
+
+    announcement:
+      sent: "Message sent to %{volunteer_count} volunteers"
+      created: "Announcement created"
+      updated: "Announcement updated"
+      deleted: "Announcement deleted"
+
+  sms:
+    unexpected_error: "Sorry! Something went wrong. An administrator has been notified."
+    unrecognized_user: "Sorry! Can't find user account. Start your message with '@your-pcvid' or text from a recognized number. Contact Health Unit to add a new number to your account"
+    invalid_for_country: "Sorry, %{codes} are not currently offered by the med unit in %{country}."
+    unrecognized_shortcodes: "Unrecognized supply short codes: %{codes}. Resubmit your request in the format: Supply Short Code, Supply Short Code - Special Instructions"
+    unparseable: "Oops! The format of your message was incorrect. Resubmit your request in the format: Supply Short Code, Supply Short Code - Special Instructions"
+    confirmation: "Thanks! Your request for %{supplies} has been received. You can expect a response shortly after %{due_date}."
+    duplicate_order: "Oops! We have already received your request for %{supplies}. A response will follow shortly after %{due_date}."
+    orders_flagged: "Your orders for %{supplies} have been flagged for follow-up from your PCMO."
+    orders_received: "Thanks! Your orders for %{supplies} have been marked as received."
+    no_outstanding_responses: "Sorry! We can't find any outstanding orders for your account."
+    response:
+      delivery: "Your request for %{supplies} has been approved for delivery to you."
+      pickup: "Your request for %{supplies} has been approved for pickup."
+      purchase: "Sorry, we are unable to fulfill your request for %{supplies}. Please purchase and allow us to reimburse you."
+      denial: "Sorry, we are unable to fulfill your request for %{supplies}. Check email for details"
+      mixed_approval: "Your request for %{supplies} has been approved. Check email for details."
+      partial_denial: "Sorry, we are unable to fill your entire order for %{supplies}. Check email for details."
+      receipt_reminder: "Did you get your order of %{supplies} that was approved on %{response_date}? Reply w/ Yes or No"
+

@@ -1,65 +1,49 @@
-# FIXME: extract into a more appropriate location / framework?
 $ ->
-  # -- Order list -----
-  $("tr[data-link]").click ->
-    window.location = $(this).data "link"
+  # Make data-link rows clickable
+  $('.link').click -> window.location = $(@).data "link"
 
-  # -- Order fulfillment -----
-  instructions = $ ".order__instructions textarea"
-  remaining = $ ".order__characters"
+  # Show a character count below data-character-count boxes
+  $('[data-character-count]').keyup ->
+    $el = $ @
+    remaining = $el.data('character-count') - $el.val().length
+    $('.character-count').text(remaining + ' characters left')
+  .keyup()
 
-  update_counts = ->
-    count = 160 - instructions.val().length
-    remaining.text count + " characters remaining"
+  # Automatically submit .auto-submit forms
+  $('.auto-select button').hide()
+  $('.auto-select select').change -> @form.submit()
 
-  $(".order__message input").click ->
-    instructions.val $(this).data "message"
-    update_counts()
+  # Apply chosen boxes
+  $(".chosen-select").chosen()
 
-  instructions.keyup(update_counts).keyup()
 
-  # -- Settings dropdown -----
-  $("#dropdown-nav a").click ->
-    $(".nav--dropdown").toggle()
+  # Radio button grid select helpers
+  $("th.delivery-method").click ->
+    method = $(@).data("method")
+    $(":radio[data-method=#{method}]").prop "checked", true
 
-  # -- Add user role -----
-  $("#user_role").change( ->
-    if $("#user_role").val() == 'pcv'
-      $("#user_pcmo_id").show()
-    else
-      $("#user_pcmo_id").hide()
-  ).change()
+  $(".clear-radios").click (e) ->
+    e.preventDefault()
+    $(":radio[data-method]").prop "checked", false
 
-  # -- PCMO country selector -----
-  $("#admin_country_select").change( ->
-    id = $(@).val()
 
-    $("tr.order").hide()
-    $("tr.order.c#{id}").show()
+  # "Add another phone" extra input field
+  phones_form = $(".phones-form")
+  if phones_form.length > 0
+    inputs = $(".phones-form .form-group")
+    last = inputs[inputs.length - 1]
+    template = $(last).clone()
 
-    # Hide sections with no content
-    # TODO: this selector could be more performant
-    $(".section").hide()
-    $(".section:has(.c#{id})").show()
-  ).change()
+    phones_form.on "click", ".remove", (e) ->
+      e.preventDefault()
+      $(@).closest(".form-group").remove()
 
-  # -- To pick start and end dates -----
-  $("#duration").daterangepicker
-    format: "MM/DD/YY"
-    startDate: "9/01/13"
-    endDate: "12/31/13"
-  , (start, end) ->
-    # FIXME: make ajax request instead of sending all of the rows
-    s = start.format "YYYYMMDD"
-    e = end.format   "YYYYMMDD"
+    $(".phones-form .add").click (e) ->
+      e.preventDefault()
+      template.clone().insertBefore @
 
-    $(".order").each (n,o) ->
-      $o = $ o
-      date = $o.data("date")
-      if s <= date && date <= e
-        $o.show()
-      else
-        $o.hide()
+  roster_uploader = $("#roster_upload_form")
+  roster_uploader.S3Uploader()
 
-  $(".datepicker").datepicker()
-
+  roster_uploader.bind "ajax:success", (e, data) ->
+    window.location = "/country/roster/edit?upload_id=" + data.upload_id

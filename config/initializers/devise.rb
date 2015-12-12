@@ -1,3 +1,28 @@
+class ApiAuthStrategy < Devise::Strategies::Base
+  def valid?
+    ApiAuth.access_id(request).present?
+  end
+
+  def authenticate!
+    user = User.find_by_id ApiAuth.access_id request
+    if user && ApiAuth.authentic?(request, user.secret_key)
+      success! user
+    else
+      fail! "You must authorize this request"
+    end
+  end
+end
+
+class JSONAuthFailure < Devise::FailureApp
+  def respond
+    return super unless request.format == :json or request.content_type == 'application/json'
+
+    self.status        = 401
+    self.content_type  = "application/json"
+    self.response_body = { error: "Authentication required" }.to_json
+  end
+end
+
 # Use this hook to configure devise mailer, warden hooks and so forth.
 # Many of these configuration options can be set straight in your model.
 Devise.setup do |config|
@@ -7,7 +32,7 @@ Devise.setup do |config|
   config.mailer_sender = "support@pcmedlink.org"
 
   # Configure the class responsible to send e-mails.
-  # config.mailer = "Devise::Mailer"
+  config.mailer = "UserMailer"
 
   # ==> ORM configuration
   # Load and configure the ORM. Supports :active_record (default) and
@@ -102,13 +127,13 @@ Devise.setup do |config|
   # their account can't be confirmed with the token any more.
   # Default is nil, meaning there is no restriction on how long a user can take
   # before confirming their account.
-  # config.confirm_within = 3.days
+  config.confirm_within = 1.year
 
   # If true, requires any email changes to be confirmed (exactly the same way as
   # initial account confirmation) to be applied. Requires additional unconfirmed_email
   # db field (see migrations). Until confirmed new email is stored in
   # unconfirmed email column, and copied to email column on successful confirmation.
-  config.reconfirmable = true
+  config.reconfirmable = false # users are not allowed to change emails
 
   # Defines which key will be used when confirming an account
   # config.confirmation_keys = [ :email ]
@@ -172,7 +197,7 @@ Devise.setup do |config|
   # Time interval you can reset your password with a reset password key.
   # Don't put a too small interval or your users won't have the time to
   # change their passwords.
-  config.reset_password_within = 6.hours
+  config.reset_password_within = 1.year
 
   # ==> Configuration for :encryptable
   # Allow you to use another encryption algorithm besides bcrypt (default). You can use
@@ -229,6 +254,11 @@ Devise.setup do |config|
   #   manager.intercept_401 = false
   #   manager.default_strategies(:scope => :user).unshift :some_external_strategy
   # end
+  config.warden do |manager|
+    manager.strategies.add :api_auth, ApiAuthStrategy
+    manager.default_strategies(scope: :user).unshift :api_auth
+    manager.failure_app = JSONAuthFailure
+  end
 
   # ==> Mountable engine configurations
   # When using Devise inside an engine, let's call it `MyEngine`, and this engine

@@ -12,8 +12,9 @@
 //
 //= require jquery
 //= require jquery_ujs
+//= require messenger
+//= require messenger-theme-future
+//= require chosen.jquery
+//= require s3_direct_upload
 //= require main
-//= require moment
-//= require bootstrap-datepicker
-//= require daterangepicker
-
+//= require_tree .

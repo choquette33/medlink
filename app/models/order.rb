@@ -1,100 +1,28 @@
 class Order < ActiveRecord::Base
-  belongs_to :user
+  include Concerns::UserScope
+
   belongs_to :supply
+  belongs_to :request
+  belongs_to :response
 
-  has_one :response
+  validates_presence_of :supply, :request, on: :create
+  immutable :supply_id, :request_id
 
-  validates_presence_of :user,   message: "unrecognized"
-  validates_presence_of :supply, message: "unrecognized"
+  serialize :delivery_method, DeliveryMethod
 
-  validates_presence_of :location, message: "is missing"
-  validates_presence_of :unit, message: "is missing"
-  validates_presence_of :quantity, message: "is missing"
+  paginates_per 10
+  default_scope { order created_at: :desc }
 
-  validates_numericality_of :quantity, only_integer: true, on: :create
-
-  scope :responded,   -> { includes(:response).references(:response
-    ).where("responses.id IS NOT NULL") }
-  scope :unresponded, -> { includes(:response).references(:response
-    ).where("responses.id IS NULL")     }
-
-  scope :past_due, -> { unresponded.where(["orders.created_at < ?",
-    3.business_days.ago]) }
-  scope :pending,  -> { unresponded.where(["orders.created_at >= ?",
-    3.business_days.ago]) }
-
-  def response_time
-    #FIXME: Absolute delta response time or remove weekends
-    response && ((response.created_at - created_at) / (60 * 60 * 24)).round(1)
-  end
-
-  def how_past_due
-    # How many days over 3 are we past due?
-    if response
-      past_due = (
-        (3.business_days.after(created_at) -
-          response.created_at) / (60 * 60 * 24)
-      ).round(1)
-      if (past_due < 3)
-        0
-      else
-        (past_due - 3).round(1)
-      end
-    end
-  end
-
-  def country_id
-    # FIXME: make this an actual column
-    user.country_id
-  end
-
-  def responded?
-    response.present?
-  end
+  scope :with_responses, -> { where.not response_id: nil }
+  scope :without_responses, -> { where response_id: nil }
 
   def responded_at
     response && response.created_at
   end
 
-  def fulfilled?
-    fulfilled_at.present?
-  end
-
-  validates_uniqueness_of :supply_id, scope: :user_id,
-    conditions: -> { unresponded }
-
-  def self.human_attribute_name(attr, options={})
-    {
-      user:   "PCV ID",
-      supply: "shortcode"
-    }[attr] || super
-  end
-
-  def self.create_from_text data
-    user   = User.lookup   data[:pcvid]
-    supply = Supply.lookup data[:shortcode]
-
-    create!({
-      user_id:   user.try(:id),
-      phone:     data[:phone],
-      email:     user.try(:email),
-      supply_id: supply.try(:id),
-      unit:      "#{data[:dosage_value]}#{data[:dosage_units]}",
-      quantity:  data[:qty],
-      location:  data[:loc] || user.try(:location)
-    })
-  end
-
-  def confirmation_message
-    if self.valid?
-      I18n.t "order.confirmation"
-    else
-      errors.full_messages.join ","
-    end
-  end
-
-  def full_dosage
-    "#{dose}#{unit}"
+  def delivery_method= method
+    m = DeliveryMethod.load method
+    raise "Could not coerce '#{method}' to a delivery method" if method && !m
+    super m
   end
 end
-

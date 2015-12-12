@@ -1,23 +1,21 @@
 language: ruby
-
+bundler_args: --without development production
+sudo: false
 rvm:
-  - 2.0.0
-
+- 2.2.2
 script:
-  - RAILS_ENV=test COVERAGE=true bundle exec rake --trace db:migrate spec
-  - RAILS_ENV=test COVERAGE=true bundle exec cucumber
-  - RAILS_ENV=test COVERAGE=true bundle exec cucumber -p touch
-
+- RAILS_ENV=test COVERAGE=true bundle exec rake db:setup spec
+env:
+- s3_access_key_id=xxx s3_secret_access_key=xxx s3_bucket_name=xxx 
 branches:
   only:
-    - master
-    - production
-
+  - master
+  - production
 notifications:
   email:
     recipients:
-      - gmacie@hotmail.com
-      - jasnow@hotmail.com
-      - jamesdabbs@gmail.com
+    - jamesdabbs@gmail.com
     on_success: change
     on_failure: always
+addons:
+  postgresql: "9.4"

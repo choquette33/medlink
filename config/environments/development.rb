@@ -30,4 +30,14 @@ Medlink::Application.configure do
   config.action_mailer.delivery_method = :letter_opener
 
   config.eager_load = false
+
+  config.after_initialize do
+    Bullet.enable     = true
+    Bullet.add_footer = true
+  end unless ENV["NO_BULLET"]
+
+  config.pingbot = Slackbot.new \
+    channel:    "#medlink-logs",
+    username:   "Medlink",
+    icon_emoji: ":hospital:"
 end

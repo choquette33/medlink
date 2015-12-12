@@ -1,19 +1,17 @@
-# -*- coding: utf-8 -*-
 class Supply < ActiveRecord::Base
   has_many :orders
   has_many :users, through: :orders
+  has_many :country_supplies
+  has_many :countries, through: :country_supplies
 
-  def to_s
-    name
-  end
+  before_save { self.shortcode = shortcode.upcase }
 
-  def self.choices
-    all.map { |supply| [supply.name, supply.id] }
-  end
+  default_scope { order name: :asc }
 
-  def self.lookup str
-    where(['lower(shortcode) = ?', str.downcase]).first ||
-    where(['lower(name) = ?',      str.downcase]).first ||
-    raise("Unrecognized shortcode")
+  validates :shortcode, presence: true, uniqueness: true
+  validates :name, presence: true, uniqueness: true
+
+  def select_display
+    "#{name} (#{shortcode})"
   end
 end

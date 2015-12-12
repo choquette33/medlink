@@ -9,7 +9,7 @@ Medlink::Application.configure do
   config.action_controller.perform_caching = true
 
   # Disable Rails's static asset server (Apache or nginx will already do this)
-  config.serve_static_assets = false
+  config.serve_static_files = false
 
   # Compress JavaScripts and CSS
   config.assets.compress = true
@@ -28,7 +28,7 @@ Medlink::Application.configure do
   # config.action_dispatch.x_sendfile_header = 'X-Accel-Redirect' # for nginx
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  # config.force_ssl = true
+  config.force_ssl = true
 
   # See everything in the log (default is :info)
   # config.log_level = :debug
@@ -49,7 +49,6 @@ Medlink::Application.configure do
   config.assets.precompile += %w( font-awesome-ie7.min.css )
 
   # Disable delivery errors, bad email addresses will be ignored
-  # config.action_mailer.raise_delivery_errors = false
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = false
@@ -67,4 +66,27 @@ Medlink::Application.configure do
   config.active_support.deprecation = :notify
 
   config.eager_load = true
+
+  config.log_level = :info
+
+  config.active_job.queue_adapter = :sidekiq
+
+  config.after_initialize do
+    Bullet.enable  = true
+    Bullet.rollbar = true
+  end
+
+  config.send_texts = true
+
+  slack_name = ENV["SLACK_BOT_NAME"] || "Medlink"
+
+  config.slackbot = Slackbot.new \
+    channel:    "#medlink",
+    username:   "Medlink",
+    icon_emoji: ":hospital:"
+  config.pingbot = Slackbot.new \
+    channel:    "#medlink-logs",
+    username:   "Medlink",
+    icon_emoji: ":hospital:"
+  config.sms.method = :delivery
 end

@@ -1,59 +1,77 @@
 source 'https://rubygems.org'
 
-ruby '2.0.0'
+ruby '2.2.2'
 
-gem 'rails', '4.0.1'
+gem 'rails'
 
+gem 'pg'
 gem 'jquery-rails'
-gem 'bootstrap-daterangepicker-rails'
-gem 'haml-rails'
+gem 'slim-rails'
+gem 'jbuilder'
 gem 'twilio-ruby'
+gem 'pry-rails'
 
+gem 'figaro'
 gem 'devise'
-gem 'cancan'
+gem 'pundit'
+gem 'api-auth'
 
-gem 'sucker_punch'
+gem 'rollbar'
+gem 'sidekiq'
+gem 'sinatra', require: nil
 
-gem 'business_time'
+gem 'kaminari'
+gem 'virtus'
+gem 'draper'
+gem 'reform'
 
-gem 'ffi', '1.9.0'
+gem 'quiet_assets'
 
-gem 'sass-rails'
-gem 'coffee-rails'
-gem 'haml'
-gem 'uglifier'
+gem 'bullet'
+
+gem 'bootstrap_form'
+gem 's3_direct_upload'
+
+group :assets do
+  gem 'sass-rails'
+  gem 'coffee-rails'
+  gem 'uglifier'
+end
 
 group :development do
-  gem 'sqlite3'
-  gem 'pry'
   gem 'better_errors'
   gem 'binding_of_caller'
+end
+
+group :development, :test do
+  gem 'activerecord-import'
+  gem 'named_seeds'
+  gem 'pry-byebug'
   gem 'letter_opener'
-  gem 'simplecov'
-  gem 'coveralls', require: false
-  gem 'table_print'
-  gem 'quiet_assets'
-  gem 'awesome_print'
+
+  gem 'spring'
+  gem 'spring-commands-rspec'
 end
 
-gem 'rspec-rails', group: [:development, :test]
 group :test do
-  gem 'rake'
+  gem 'coveralls', require: false
+  gem 'simplecov', require: false
+
+  gem 'rspec-rails'
+  gem 'rspec-given'
+  gem 'capybara'
   gem 'factory_girl_rails'
-  gem 'email_spec'
-  gem 'sms-spec'
-
-  gem 'cucumber-rails', :require => false
   gem 'database_cleaner'
-  gem 'selenium-webdriver'
+  gem 'vcr'
+  gem 'webmock'
   gem 'zonebie'
-
-  gem 'show_me_the_cookies'
+  gem 'timecop'
+  gem 'poltergeist'
 end
 
+gem 'newrelic_rpm'
 group :production do
-  gem 'unicorn'
-  gem 'newrelic_rpm'
-  gem 'pg'
-  gem 'rails_12factor' # For asset compilation
+  gem 'puma'
+  gem 'rails_12factor'
+  gem 'skylight'
 end

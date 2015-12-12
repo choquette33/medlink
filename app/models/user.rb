@@ -1,75 +1,84 @@
 class User < ActiveRecord::Base
-  # Include default devise modules. Others available are:
-  # :token_authenticatable, :confirmable,
-  # :lockable, :timeoutable and :omniauthable
-  devise :database_authenticatable, :registerable,
+  devise :database_authenticatable, :confirmable,
          :recoverable, :rememberable, :trackable, :validatable
 
+  scope :active, -> { where active: true }
+
+  enum role: [ :pcv, :pcmo, :admin ]
+  def self.role_names
+    { "PCV" => "pcv", "PCMO" => "pcmo", "Admin" => "admin" }
+  end
+  def role= r
+    r = r.downcase if r.respond_to?(:downcase)
+    super r
+  end
+
   belongs_to :country
+
+  paginates_per 10
+
+  has_many :requests
   has_many :orders
-  validates_presence_of :country, :location, :phone, :first_name,
-    :last_name, :pcv_id, :role
-  validates :pcv_id, uniqueness: true
+  has_many :responses
+  has_many :receipt_reminders
 
-  Roles = {
-    pcv:   'Peace Corps Volunteer',
-    pcmo:  'Peace Corps Medical Officer',
-    admin: 'Admin'
-  }
+  has_many :phones, dependent: :destroy
+  has_many :messages, class_name: "SMS"
 
-  Roles.each do |type, _|
-    define_method :"#{type}?" do
-      role.to_sym == type
-    end
+  has_many :submitted_requests, foreign_key: "entered_by", class_name: "Request"
+  has_many :roster_uploads, foreign_key: "uploader_id"
 
-    scope type.to_s.pluralize, -> { where(role: type) }
+  validates_presence_of :country, :location, :first_name, :last_name, :role
+  validates :pcv_id, presence: true, uniqueness: true, if: :pcv?
+  validates :time_zone, inclusion: { in: Country.time_zones.map(&:name) }
+
+  scope :past_due, -> { where ["waiting_since  < ?", DueDate.cutoff] }
+  scope :pending,  -> { where ["waiting_since >= ?", DueDate.cutoff] }
+
+  before_validation on: :create do |u|
+    u.time_zone  = u.country.time_zone unless u.time_zone.present?
+    u.password ||= SecureRandom.hex(64)
   end
 
-  def self.pcmos_by_country
-    pcmos.includes(:country).group_by &:country
-  end
-
-  def pcvs
-    case role.to_sym
-    when :admin
-      User.all.pcvs
-    when :pcmo
-      country.users.pcvs
-    else
-      raise "No PCVs for #{role}"
-    end
-  end
-
-  # FIXME: denormalize on country
-  def accessible_orders
-    case role.to_sym
-    when :admin
-      Order.all
-    when :pcmo
-      Order.includes(:user).where users: {country_id: country_id}
-    else
-      orders
-    end
-  end
-
-  def self.lookup str
-    where(['lower(pcv_id) = ?', str.downcase]).first ||
-    raise("Unrecognized PCVID")
-  end
-
-  def send_reset_password_instructions opts={}
-    if opts[:async] == false
-      super()
-    else
-      MailerJob.enqueue :forgotten_password, id
-    end
+  def primary_phone
+    @_primary_phone ||= phones.first
   end
 
   def name
     "#{first_name} #{last_name}".strip
   end
 
-  def to_s
-    "#{name} (#{pcv_id})"
+  def textable?
+    primary_phone.present?
+  end
+
+  def send_text message
+    return unless primary_phone
+    UserTexter.new(phone: primary_phone, twilio_account: country.twilio_account).send message
+  end
+
+  def available_supplies
+    country.available_supplies
+  end
+
+  def sms_contact_number
+    n = country.twilio_account.number.to_s
+    "#{n[0..-11]} (#{n[-10..-8]}) #{n[-7..-5]}-#{n[-4..-1]}"
+  end
+
+  def inactivate!
+    update! active: false
+  end
+
+  def activate!
+    update! active: true
+  end
+
+  def personal_requests
+    Request.where user_id: id, entered_by: id
+  end
+
+  def ensure_secret_key!
+    update! secret_key: ApiAuth.generate_secret_key unless secret_key.present?
   end
 end

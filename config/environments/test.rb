@@ -8,7 +8,7 @@ Medlink::Application.configure do
   config.cache_classes = true
 
   # Configure static asset server for tests with Cache-Control for performance
-  config.serve_static_assets = true
+  config.serve_static_files = true
   config.static_cache_control = "public, max-age=3600"
 
   # Show full error reports and disable caching
@@ -33,4 +33,11 @@ Medlink::Application.configure do
   config.action_mailer.default_url_options = { :host => 'localhost:3000' }
 
   config.eager_load = false
+
+  config.active_job.queue_adapter = :test
+
+  config.after_initialize do
+    Bullet.enable       = true
+    Bullet.rails_logger = true
+  end unless ENV["NO_BULLET"]
 end

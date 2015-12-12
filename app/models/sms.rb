@@ -1,65 +1,26 @@
-class SMS
+class SMS < ActiveRecord::Base
+  MAX_LENGTH = 160
 
-  class ParseError < StandardError ; ; end
+  self.table_name = "messages"
 
-  attr_accessor :phone, :message
+  enum direction: [ :incoming, :outgoing ]
 
-  def initialize phone, message
-    @phone   = phone
-    @message = message
+  belongs_to :user
+  belongs_to :phone
+  belongs_to :twilio_account
+  has_one :request, foreign_key: :message_id
+
+  validates_presence_of :phone, :twilio_account, :number, :direction
+
+  include Concerns::Immutable
+  immutable :user_id, :twilio_account_id, :number, :direction, :text
+
+  def duplicates within: nil
+    scope = SMS.incoming.where(text: text, number: number).where.not(id: id)
+    within ? scope.where("created_at >= ?", within.ago) : scope
   end
 
-  def self.configured?
-    %w{ ACCOUNT_SID AUTH PHONE_NUMBER }.all? do |key|
-      ENV["TWILIO_#{key}"].present?
-    end
+  def last_duplicate within: nil
+    duplicates(within: within).newest
   end
-
-  def self.parse params
-    body = params[:Body]
-    data = { phone: params[:From] }
-
-    if body
-      parse_list = params[:Body].split(/,\s*/)
-      data[:pcvid], data[:shortcode] = parse_list.shift 2
-      parse_list.each do |item|
-        if match = item.match(/([0-9]+)\s*([a-zA-z]+)/) #dosage info
-          data[:dosage_value], data[:dosage_units] = match.captures
-        elsif match = item.match(/[0-9]+\b/) #qty
-          data[:qty] = match[0]
-        elsif match = item.match(/[a-zA-z]+\b/) #loc
-          data[:loc] = match[0]
-        end
-      end
-    end
-
-    raise ParseError.new unless data[:pcvid] && data[:shortcode]
-    data
-  end
-
-  def deliver
-    return unless SMS.configured? || defined?(SmsSpec)
-    # In the test env, this client should be monkey-patched by sms-spec
-    client = Twilio::REST::Client.new(ENV['TWILIO_ACCOUNT_SID'],
-                                      ENV['TWILIO_AUTH'])
-    client.account.sms.messages.create(
-      from: ENV['TWILIO_PHONE_NUMBER'],
-      to:   phone,
-      body: message
-    )
-  end
-
-  def self.friendly message
-    translation = case message
-    when /unrecognized pcvid/i
-      "order.unrecognized_pcvid"
-    when /unrecognized shortcode/i
-      "order.unrecognized_shortcode"
-    when /supply has already been taken/i
-      "order.duplicate_order"
-    end
-
-    I18n.t!(translation).squish
-  end
-
 end

@@ -1,5 +1,95 @@
 body
-  margin-top: 40px
+  padding-bottom: 3em
 
-.fa-cog
-  font-size: 20px
+.no-js
+  .js-required
+    display: none
+
+.yes-js
+  .no-js
+    display: none
+
+dl
+  margin: 0 0 1em
+
+.link
+  cursor: pointer
+
+.navbar-default a.navbar-brand:hover
+  color: #ddd
+
+.title
+  margin-top: 2em
+
+.glyphicon.success
+  color: #7a9659
+
+.glyphicon.danger
+  color: #b94a48
+
+// Since smart.css seems to miss this one ...
+.alert-danger
+  color: #b94a48
+  background-color: #f2dede
+  border-color: #ebccd1
+
+.duplicate-order
+  text-align: center
+  font-style: italic
+
+// For nested form fields
+.fields
+  margin-bottom: 1em
+
+.btn-back
+  margin-bottom: 2em
+
+.navbar-form
+  padding: 10px 0
+
+.request
+  margin-bottom: 2em
+
+.table .table
+  background-color: transparent
+
+.timeline .row
+  margin-bottom: 3em
+
+.delete
+  background-image: none
+  background: #29a9df
+
+.delete a
+  color: white
+
+.collapsed-only
+  display: none !important
+
+.chosen-container-multi
+  .chosen-choices
+    padding: 5px
+
+small
+  padding-left: 0.5em
+
+.ok
+  display: none
+
+#page-title small
+  color: #ddd
+
+.sorttable-controls
+  margin-bottom: 2em
+
+@media only screen and (max-width: 767px)
+  .uncollapsed
+    display: none !important
+
+  .collapsed-only
+    display: block !important
+
+// Hide links while printing - see http://stackoverflow.com/questions/3476393
+@media print
+  a:link:after, a:visited:after
+    content: ""
